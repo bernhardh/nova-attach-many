@@ -44,9 +44,26 @@ class AttachMany extends Field
         $this->fillUsing(function($request, $model, $attribute, $requestAttribute) use($resource) {
             if(is_subclass_of($model, 'Illuminate\Database\Eloquent\Model')) {
                 $model::saved(function($model) use($attribute, $request) {
-                    $model->$attribute()->sync(
-                        json_decode($request->$attribute, true)
-                    );
+                    $resourceClass = $request->resource();
+                    $value = [];
+                    $attachManyGroupsFound = false;
+                    
+                    if(isset($resourceClass::$attachManyGroups) && $resourceClass::$attachManyGroups) {
+                        foreach($resourceClass::$attachManyGroups AS $group) {
+                            if(in_array($attribute, $group)) {
+                                $attachManyGroupsFound = true;
+                                
+                                foreach($group AS $name) {
+                                    $value = array_merge($value, json_decode($request->$name, true) ?: []);
+                                }
+                            }
+                        }
+                    }
+                    if(!$attachManyGroupsFound) {
+                        $value = json_decode($request->$attribute, true);
+                    }
+                    
+                    $model->$attribute()->sync($value);
                 });
 
                 unset($request->$attribute);

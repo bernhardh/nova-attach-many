@@ -1,6 +1,37 @@
 # Nova Attach Many - Changes to Original
 
-I have done the following changes.
+### Allow to use same table for multiple "flag" fields
+
+Zum Beispiel:  `adresse` joint über Tabelle `adresse_2_art` mit der Tabelle `adresse_art`, wobei `adresse_art` aber `adresse_art_gruppe_id` in meherere Gruppen aufgeteilt ist. Im Model `\App\Models\Adresse` hat man dann mehrere `belongsToMany` Relations, wie zB.
+
+- `paymentFlags`
+- `kitchenFlags`
+- ...
+
+Dazu muss man in der Nova Resource folgendes machen:
+
+```php
+// app/Nova/Adresse
+class Adresse extends Resource {
+
+    /**
+     * For AttachMany Fields
+     * 
+     * @var \string[][]
+     */
+    public static $attachManyGroups = [
+        ["paymentFlags", "kitchenFlags"]
+    ];
+    
+    public function fields() {
+        return [
+            AttachMany::make('Zahlart', 'paymentFlags', AdresseArt\ZahlungsArt::class),
+            AttachMany::make('Küchenart', 'kitchenFlags', AdresseArt\KuechenArt::class),
+            ...
+        ];
+    }
+}
+```
 
 
 # Original Nova Attach Many
